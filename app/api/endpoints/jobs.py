@@ -11,7 +11,7 @@ from app.services.job_service import service_create_job, service_get_jobs, \
 router = APIRouter()
 routes = router
 
-@router.get("/jobs/", response_model=List[Job])
+@router.get("/", response_model=List[Job])
 def get_jobs(
     description: Optional[str] = Query(None),
     country: Optional[str] = Query(None),
@@ -31,14 +31,14 @@ def get_jobs(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/jobs/{job_id}", response_model=Job)
+@router.get("/{job_id}", response_model=Job)
 def get_job(job_id: int, db: Session = Depends(get_db)):
     job = service_get_job_by_id(db, job_id)
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found")
     return job
 
-@router.post("/jobs/", response_model=Job, status_code=201)
+@router.post("/", response_model=Job, status_code=201)
 def create_job(job: JobCreate, db: Session = Depends(get_db)):
     try:
         new_job = service_create_job(db, job.model_dump())
