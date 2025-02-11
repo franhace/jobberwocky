@@ -1,5 +1,17 @@
-# Dockerfile
 FROM tiangolo/uvicorn-gunicorn-fastapi:python3.9
+
 WORKDIR /app
-COPY ./app /app
-RUN pip install -r /app/requirements.txt
+
+COPY ./requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+COPY ./app /app/app
+COPY ./.env /app/.env
+
+# add entrypoint
+COPY ./entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+ENV DATABASE_READY=0
+
+CMD ["/app/entrypoint.sh"]
