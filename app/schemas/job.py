@@ -9,7 +9,7 @@ from app.schemas.country import Country
 class JobBase(BaseModel):
     title: str
     description: str
-    salary: str
+    salary: float
     skills: List[str] = []
 
 
