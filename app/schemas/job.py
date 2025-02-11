@@ -1,6 +1,6 @@
 from typing import List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, condecimal
 
 from app.schemas.company import Company
 from app.schemas.country import Country
@@ -9,7 +9,7 @@ from app.schemas.country import Country
 class JobBase(BaseModel):
     title: str
     description: str
-    salary: float
+    salary: condecimal(gt=0)
     skills: List[str] = []
 
 
