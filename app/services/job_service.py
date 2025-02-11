@@ -31,6 +31,15 @@ def service_create_job(db: Session, job_data: dict) -> Job:
         db.commit()
         db.refresh(country)
 
+    existing_job = db.query(Job).filter(
+        Job.title == job_data["title"],
+        Job.company_id == company.id,
+        Job.country_id == country.id
+    ).first()
+
+    if existing_job:
+        raise ValueError("Job already exists.")
+
     job = Job(
         title=job_data["title"],
         description=job_data["description"],
