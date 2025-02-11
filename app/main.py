@@ -1,11 +1,11 @@
 from fastapi import FastAPI
-from app.api.endpoints import jobs
+from app.api.endpoints.jobs import routes
 from app.config.settings import settings
 # TODO: add error handling
 
 app = FastAPI(title="JobberWocky API", version="1.0.0")
 
-app.include_router(jobs, prefix="/api/v1/jobs", tags=["jobs"])
+app.include_router(router=routes, prefix="/api/v1/jobs", tags=["jobs"])
 
 if __name__ == "__main__":
     import uvicorn
