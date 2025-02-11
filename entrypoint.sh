@@ -1,5 +1,6 @@
 #!/bin/sh
 
+
 create_database() {
     echo "Creating database tables..."
     python /app/app/db/create_db.py
@@ -7,18 +8,29 @@ create_database() {
 }
 
 seed_database() {
-    if [ -f app/db/seed_db.py ]; then
-        python app/db/seed_db.py
+    if [ -f /app/app/db/seed_db.py ]; then
+        echo "Seeding database..."
+        python /app/app/db/seed_db.py
         return $?
     else
-        echo "Error: seed_db.py not found at ./db/seed_db.py"
+        echo "Error: seed_db.py not found at /app/app/db/seed_db.py"
         return 1
     fi
 }
 
+run_tests() {
+    echo "Running tests..."
+    if pytest; then
+        echo "All tests passed."
+    else
+        echo "Tests failed!"
+        exit 1
+    fi
+}
+
+run_tests
+
 create_database
-echo "Wainting a few seconds before creating db..."
-sleep 1
 DB_STATUS=$?
 
 if [ $DB_STATUS -eq 0 ]; then
