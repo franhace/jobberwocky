@@ -61,10 +61,8 @@ def job_data():
 @pytest.fixture(scope='function')
 def setup_company_and_country(db_session):
     company = Company(name="Avature")
-    country = Country(name="Argentina")
+    country = Country(name="Greenland")
     db_session.add(company)
     db_session.add(country)
     db_session.commit()
     return company, country
-
-# Test for getting a job by ID
