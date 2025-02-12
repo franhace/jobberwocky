@@ -1,9 +1,23 @@
 #!/bin/sh
 
+DB_PATH="/app/app/db/jobs.db"
+
+delete_database() {
+    if [ -f "$DB_PATH" ]; then
+        echo "Deleting existing database at $DB_PATH..."
+        rm -f "$DB_PATH"
+        if [ $? -ne 0 ]; then
+            echo "Error: Failed to delete existing database."
+            exit 1
+        fi
+    else
+        echo "No existing database found at $DB_PATH. Proceeding..."
+    fi
+}
 
 create_database() {
     echo "Creating database tables..."
-    python /app/app/db/create_db.py
+    python app/db/create_db.py
     return $?
 }
 
@@ -29,7 +43,8 @@ run_tests() {
 }
 
 run_tests
-
+sleep 2
+delete_database
 create_database
 DB_STATUS=$?
 

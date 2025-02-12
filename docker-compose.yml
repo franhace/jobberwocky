@@ -1,18 +1,28 @@
-version: "3.9"
+version: '3.8'
 
 services:
-  fastapi:
+  jobberwoky:
+    image: jobberwoky
+    container_name: jobberwoky
     build:
-      context: ./fastapi_app
-      dockerfile: Dockerfile
-    ports:
-      - "8000:80"
+      context: ./
     depends_on:
-      - external_api
+      - avatureexternaljobs
+    ports:
+      - "8080:80"
+    networks:
+      - my_network
 
-  external_api:
+  avatureexternaljobs:
+    image: avatureexternaljobs
+    container_name: avatureexternaljobs
     build:
-      context: ./external_api
-      dockerfile: Dockerfile
+      context: ./jobberwocky-extra-source-v2
     ports:
       - "8081:8080"
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    driver: bridge
