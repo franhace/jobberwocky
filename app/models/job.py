@@ -22,4 +22,3 @@ class Job(Base):
     company = relationship("Company", back_populates="jobs",foreign_keys=[company_id], uselist=False )
     country = relationship("Country", back_populates="jobs", foreign_keys=[country_id], uselist=False)
 
-

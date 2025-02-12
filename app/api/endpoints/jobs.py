@@ -22,27 +22,30 @@ async def search_jobs(
     country: Optional[str] = Query(None),
     salary_min: Optional[int] = Query(None, ge=0),
     salary_max: Optional[int] = Query(None, ge=0),
+    skills: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ):
     internal_jobs = service_get_jobs(
         db,
-        description=description,
+        title=description,
         country=country,
         salary_min=salary_min,
-        salary_max=salary_max
+        salary_max=salary_max,
+        skills=skills
     )
 
     external_params = {
         "description": description,
         "country": country,
         "salary_min": salary_min,
-        "salary_max": salary_max
+        "salary_max": salary_max,
+        "skills": skills
     }
     external_data = await fetch_external_jobs(external_params)
     external_jobs = normalize_external_jobs(external_data, db)
 
     combined_jobs = merge_jobs(internal_jobs, external_jobs)
-    return [Job.from_orm(job) if hasattr(job, "__table__") else ExternalJob.from_orm(job) for job in combined_jobs]
+    return [Job.model_validate(job) if hasattr(job, "__table__") else ExternalJob.model_validate(job) for job in combined_jobs]
 
 
 

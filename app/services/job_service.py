@@ -6,6 +6,7 @@ import httpx
 from dotenv import load_dotenv
 from fastapi import HTTPException
 from pydantic import BaseModel
+from sqlalchemy import or_
 from sqlalchemy.orm import Session, selectinload
 
 from app.config.database import get_db
@@ -69,19 +70,20 @@ def service_create_job(db: Session, job_data: dict) -> Job:
 
 def service_get_jobs(
     db: Session,
-    description: Optional[str] = None,
+    title: Optional[str] = None,
     country: Optional[str] = None,
     salary_min: Optional[int] = None,
     salary_max: Optional[int] = None,
-    source: Optional[str] = None
+    source: Optional[str] = None,
+    skills: Optional[List[str]] = None
 ):
     query = db.query(Job).options(
         selectinload(Job.company),
         selectinload(Job.country)
     )
 
-    if description:
-        query = query.filter(Job.description.ilike(f"%{description}%"))
+    if title:
+        query = query.filter(Job.description.ilike(f"%{title}%"))
     if country:
         query = query.join(Country).filter(Country.name.ilike(country))
     if salary_min:
@@ -90,7 +92,8 @@ def service_get_jobs(
         query = query.filter(Job.salary <= salary_max)
     if source:
         query = query.filter(Job.source.ilike(f"%{source}%"))
-
+    if skills:
+        query = query.filter(Job.skills.contains(skills))
     return query.all()
 
 
@@ -98,15 +101,15 @@ def service_get_jobs(
 
 
 async def fetch_external_jobs(params: dict):
+    filtered_params = {k: v for k, v in params.items() if v is not None}
+    print(filtered_params)
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 EXTERNAL_SOURCE,
-                params={"limit": 1},
+                params=filtered_params,
                 timeout=3.0
             )
-            print(response)
-            response.json()
             return response.json()
     except (httpx.RequestError, httpx.HTTPStatusError) as e:
         print("External API error: {}".format(e))
