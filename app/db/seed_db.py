@@ -1,11 +1,9 @@
 import os
 import sys
 
-from dotenv import load_dotenv
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 
-from app.models.base import Base
-from app.models.company import Company
+from app.db.crud import get_or_create_country, get_or_create_company
 from app.models.country import Country
 from app.models.job import Job
 
@@ -13,37 +11,26 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 database_file_path = os.path.join(current_dir, 'jobs.db')
 SQLALCHEMY_DATABASE_URL = f"sqlite:///{database_file_path}"
 
-if not os.path.isfile(database_file_path):
-    print(f"Database file does not exist at: {database_file_path}")
-    sys.exit(1)
-
-
-print("DB URL: {}".format(SQLALCHEMY_DATABASE_URL))
 
 def seed_initial_data():
     from sqlalchemy.orm import sessionmaker
 
     engine = create_engine(SQLALCHEMY_DATABASE_URL)
-
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     db = SessionLocal()
 
-    try:
-        countries = [
-            Country(name="Argentina"),
-            Country(name="USA"),
-            Country(name="Spain")
-        ]
-        db.add_all(countries)
-        db.commit()
+    # clear_all_tables(db)
 
-        companies = [
-            Company(name="Avature"),
-            Company(name="Google"),
-            Company(name="Meta")
-        ]
-        db.add_all(companies)
-        db.commit()
+
+    try:
+        countries = ["Argentina", "USA", "Spain"]
+        companies = ["Avature", "Google", "Meta"]
+
+        for country in countries:
+            get_or_create_country(db, country)
+
+        for company in companies:
+            get_or_create_company(db, company)
 
         jobs = [
             Job(

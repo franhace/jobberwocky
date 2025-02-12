@@ -1,35 +1,50 @@
-from typing import Optional, List
+from typing import Optional, Union
+
+import httpx
 from fastapi import APIRouter, Query, HTTPException, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.config.database import get_db
-from app.schemas.job import Job, JobCreate
-from app.services.job_service import service_create_job, service_get_jobs, \
-    service_get_job_by_id
+from app.schemas.job import Job, JobCreate, ExternalJob
+from app.services.job_service import (
+    service_get_jobs,
+    service_get_job_by_id, service_create_job, normalize_external_jobs, merge_jobs, fetch_external_jobs, EXTERNAL_SOURCE
+)
 
 router = APIRouter()
 routes = router
 
-@router.get("/", response_model=List[Job])
-def get_jobs(
+
+@router.get("/", response_model=list[Union[Job, ExternalJob]])
+async def search_jobs(
     description: Optional[str] = Query(None),
     country: Optional[str] = Query(None),
     salary_min: Optional[int] = Query(None, ge=0),
     salary_max: Optional[int] = Query(None, ge=0),
     db: Session = Depends(get_db)
 ):
-    try:
-        jobs = service_get_jobs(
-            db=db,
-            description=description,
-            country=country,
-            salary_min=salary_min,
-            salary_max=salary_max
-        )
-        return jobs
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    internal_jobs = service_get_jobs(
+        db,
+        description=description,
+        country=country,
+        salary_min=salary_min,
+        salary_max=salary_max
+    )
+
+    external_params = {
+        "description": description,
+        "country": country,
+        "salary_min": salary_min,
+        "salary_max": salary_max
+    }
+    external_data = await fetch_external_jobs(external_params)
+    external_jobs = normalize_external_jobs(external_data, db)
+
+    combined_jobs = merge_jobs(internal_jobs, external_jobs)
+    return [Job.from_orm(job) if hasattr(job, "__table__") else ExternalJob.from_orm(job) for job in combined_jobs]
+
+
 
 @router.get("/{job_id}", response_model=Job)
 def get_job(job_id: int, db: Session = Depends(get_db)):
@@ -55,3 +70,18 @@ def health_check(db: Session = Depends(get_db)):
         return {"status": "healthy"}
     except Exception:
         raise HTTPException(status_code=500, detail="Database connection failed")
+
+
+@router.get("/health/external")
+async def check_external_health():
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                EXTERNAL_SOURCE,
+                params={"limit": 1},
+                timeout=3.0
+            )
+            response.raise_for_status()
+            return {"status": "healthy", "external_source": "jobberwocky-extra-source"}
+    except (httpx.RequestError, httpx.HTTPStatusError) as e:
+        raise HTTPException(status_code=503, detail=f"External source is unavailable: {e}")

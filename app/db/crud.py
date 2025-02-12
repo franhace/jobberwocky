@@ -1,7 +1,7 @@
 from app import Base
+from app.config.database import get_db
 from app.models.company import Company
 from app.models.country import Country
-
 
 def clear_all_tables(db):
     for table in reversed(Base.metadata.sorted_tables):
