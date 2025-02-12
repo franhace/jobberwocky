@@ -1,3 +1,7 @@
+from unittest.mock import patch, AsyncMock
+
+import pytest
+
 from app.models.company import Company
 from app.models.country import Country
 
@@ -8,7 +12,8 @@ def test_valid_id(client, db_session):
         "company": "Test Company",
         "country": "Test Country",
         "salary": 50000,
-        "skills": ["Python", "FastAPI"]
+        "skills": ["Python", "FastAPI"],
+        "source": "internal"
     }
     create_response = client.post("/api/v1/jobs", json=job_data)
 
@@ -23,7 +28,8 @@ def test_invalid_salary(client):
         "company": "Avature",
         "salary": -100,
         "country": "Argentina",
-        "skills": ["Python"]
+        "skills": ["Python"],
+        "source": "internal"
     })
     assert response.status_code == 422
 
@@ -41,7 +47,8 @@ def test_create_job(client, db_session):
         "company": "Test Corp",
         "salary": 50000,
         "country": "Test Country",
-        "skills": ["Python"]
+        "skills": ["Python"],
+        "source": "internal"
     }
     response = client.post("/api/v1/jobs", json=job_data)
 
@@ -49,3 +56,4 @@ def test_create_job(client, db_session):
     assert response.json()["title"] == "Test Job"
     assert response.json()["company"]["name"] == "Test Corp"
     assert response.json()["country"]["name"] == "Test Country"
+    assert response.json()["source"] == "internal"
